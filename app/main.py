@@ -248,10 +248,17 @@ def docs_html() -> tuple[str, str]:
     return html, md.toc  # type: ignore[attr-defined]
 
 
+@lru_cache(maxsize=1)
+def lookup_sizes_cached(epoch: int) -> list:
+    del epoch  # only part of the cache key
+    return db.lookup_sizes()
+
+
 @app.get("/docs")
 def docs():
     html, toc = docs_html()
-    return render_template("docs.html", content=html, toc=toc, sizes=db.lookup_sizes())
+    return render_template("docs.html", content=html, toc=toc,
+                           sizes=lookup_sizes_cached(int(time.time() // 600)))
 
 
 @app.get("/healthz")

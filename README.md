@@ -4,8 +4,8 @@ A web application that generates random, fake user contact information. All data
 
 | | |
 | --- | --- |
-| Deployed application | __APP_URL__ |
-| Documentation of the stored procedures | [docs/FAKER_SQL.md](docs/FAKER_SQL.md), also at [__APP_URL__/docs](__APP_URL__/docs) |
+| Deployed application | https://itransition-faker-sql.vercel.app |
+| Documentation of the stored procedures | [docs/FAKER_SQL.md](docs/FAKER_SQL.md), also at [https://itransition-faker-sql.vercel.app/docs](https://itransition-faker-sql.vercel.app/docs) |
 | Benchmark | [docs/BENCHMARK.md](docs/BENCHMARK.md) |
 
 ## What it does
@@ -76,7 +76,7 @@ db/seed/<locale>.sql       curated vocabularies and formats per locale
 db/data/*.csv.gz           names, places, street names, Markov chain (built by tools/build_data.py)
 db/setup.py                creates everything in a database
 app/                       Flask app: generator, distribution check, benchmark, docs pages
-api/index.py, vercel.json  Vercel deployment (Python serverless function)
+index.py, vercel.json      Vercel deployment (Flask as a Python serverless function)
 tests/                     pytest suite against a live database
 scripts/benchmark.py       benchmark (results in docs/BENCHMARK.md)
 ```
