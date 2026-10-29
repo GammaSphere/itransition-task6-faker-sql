@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block title %}Faker SQL: distribution check{% endblock %}
+{% block main %}
+<section class="intro">
+  <h1>Do the numbers follow their distributions?</h1>
+  <p>{{ n|thousands }} users from <strong>{{ p.locale }}</strong>, seed {{ seed }}, drawn by <code>faker.generate_users</code> and plotted as they come out of the database.</p>
+</section>
+
+<form class="controls controls-compact" method="get">
+  <div class="field">
+    <label for="locale">Locale</label>
+    <select id="locale" name="locale" data-autosubmit>
+      {% for code, title in locales %}<option value="{{ code }}"{% if code == p.locale %} selected{% endif %}>{{ title }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="field">
+    <label for="seed">Seed</label>
+    <input id="seed" name="seed" type="text" inputmode="numeric" value="{{ seed }}">
+  </div>
+  <button class="primary" type="submit">Draw sample</button>
+</form>
+
+<section class="figure">
+  <h2>Geolocation: uniform on the sphere</h2>
+  <p class="lede">The map uses the Behrmann projection, which preserves area, so a uniform distribution on the globe looks uniform here: the poles are not crowded. About 71% of the dots land at sea, like 71% of the Earth’s surface.</p>
+  <svg class="bigmap" viewBox="0 0 360 {{ '%.1f'|format(map_h) }}" role="img" aria-label="{{ n }} generated locations on an equal-area world map">
+    <rect width="360" height="{{ '%.1f'|format(map_h) }}" class="sea"/>
+    <use href="{{ url_for('static', filename='land.svg') }}#land" class="land"/>
+    <line x1="0" x2="360" y1="{{ '%.1f'|format(map_h / 2) }}" y2="{{ '%.1f'|format(map_h / 2) }}" class="equator"/>
+    <g class="dots">{% for x, y in points %}<circle cx="{{ x }}" cy="{{ y }}" r="0.85"/>{% endfor %}</g>
+  </svg>
+</section>
+
+{% set max_band = (lat_bands|map(attribute='count')|max) %}
+{% set max_exp = (lat_bands|map(attribute='expected')|max) %}
+{% set scale = [max_band, max_exp]|max %}
+<section class="figure">
+  <h2>Users per 10° band of latitude</h2>
+  <p class="lede">Latitude is drawn as <code>asin(2u − 1)</code>, so its density follows cos(latitude): bands near the equator hold far more surface than bands near the poles. Drawing latitude uniformly in degrees would give every band the same count.</p>
+  <ul class="legend">
+    <li><span class="key key-bar"></span>Generated users</li>
+    <li><span class="key key-line"></span>Expected for a uniform sphere</li>
+    <li><span class="key key-naive"></span>Uniform latitude, the wrong method</li>
+  </ul>
+  <div class="bands" role="table" aria-label="Users per latitude band">
+    {% for b in lat_bands|reverse %}
+    <div class="band" role="row" title="{{ b.from|abs if b.from < 0 else b.from }}° to {{ (b.from + 10)|abs }}°: {{ b.count }} users, {{ '%.0f'|format(b.expected) }} expected">
+      <span class="band-label" role="rowheader">{% if b.from >= 0 %}{{ b.from }}–{{ b.from + 10 }}° N{% else %}{{ -b.from - 10 }}–{{ -b.from }}° S{% endif %}</span>
+      <span class="band-track" role="cell">
+        <span class="band-bar" style="width: {{ '%.2f'|format(100 * b.count / scale) }}%"></span>
+        <span class="band-exp" style="left: {{ '%.2f'|format(100 * b.expected / scale) }}%"></span>
+        <span class="band-naive" style="left: {{ '%.2f'|format(100 * b.naive / scale) }}%"></span>
+      </span>
+      <span class="band-value" role="cell">{{ b.count }} <small>/ {{ '%.0f'|format(b.expected) }}</small></span>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="figure">
+  <h2>Height: normal distribution per sex</h2>
+  <p class="lede">Height is <code>Normal(mean, sd)</code> from <code>faker.body_stats</code>, sampled with the Box–Muller transform. Bars are the generated users in 2 cm bins; the lines are the target density.</p>
+  <ul class="legend">
+    {% for h in heights %}<li><span class="key key-s{{ loop.index }}"></span>{{ 'Women' if h.gender == 'F' else 'Men' }}: mean {{ '%.1f'|format(h.mean) }} cm (target {{ h.target_mean }}), sd {{ '%.1f'|format(h.sd) }} (target {{ h.target_sd }})</li>{% endfor %}
+  </ul>
+  {% set hmax = [heights[0].counts|max, heights[1].counts|max, heights[0].curve|max, heights[1].curve|max]|max %}
+  <svg class="hist" viewBox="0 0 900 260" role="img" aria-label="Height histogram for women and men with normal curves">
+    {% for t in [140, 150, 160, 170, 180, 190, 200, 210] %}
+      {% set x = 40 + (t - 130) / 90 * 840 %}
+      <line x1="{{ x }}" x2="{{ x }}" y1="20" y2="230" class="grid"/>
+      <text x="{{ x }}" y="250" class="tick" text-anchor="middle">{{ t }} cm</text>
+    {% endfor %}
+    <line x1="40" x2="880" y1="230" y2="230" class="axis"/>
+    {% for h in heights %}
+      {% set s = loop.index %}
+      {% for c in h.counts %}
+        {% if c > 0 %}
+        {% set bh = 205 * c / hmax %}
+        <rect x="{{ 40 + loop.index0 * 840 / 45 + 1 + (s - 1) * 9 }}" y="{{ 230 - bh }}" width="8" height="{{ bh }}" rx="2" class="bar-s{{ s }}"><title>{{ 130 + loop.index0 * 2 }}–{{ 132 + loop.index0 * 2 }} cm, {{ 'women' if h.gender == 'F' else 'men' }}: {{ c }}</title></rect>
+        {% endif %}
+      {% endfor %}
+      <polyline class="curve-s{{ s }}" points="{% for v in h.curve %}{{ 40 + (loop.index0 + 0.5) * 840 / 45 }},{{ 230 - 205 * v / hmax }} {% endfor %}"/>
+    {% endfor %}
+  </svg>
+</section>
+
+<section class="figure">
+  <h2>Eye colour: weighted pick</h2>
+  <p class="lede">Discrete attributes are picked by inverse transform sampling over the cumulative weights in <code>faker.words</code>. Share of generated users against the configured share:</p>
+  <div class="bands bands-eyes" role="table" aria-label="Eye colour shares">
+    {% set emax = [eyes|map(attribute='share')|max, eyes|map(attribute='expected')|max]|max %}
+    {% for e in eyes %}
+    <div class="band" role="row">
+      <span class="band-label" role="rowheader">{{ e.value }}</span>
+      <span class="band-track" role="cell">
+        <span class="band-bar" style="width: {{ '%.2f'|format(100 * e.share / emax) }}%"></span>
+        <span class="band-exp" style="left: {{ '%.2f'|format(100 * e.expected / emax) }}%"></span>
+      </span>
+      <span class="band-value" role="cell">{{ '%.1f'|format(100 * e.share) }}% <small>/ {{ '%.1f'|format(100 * e.expected) }}%</small></span>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='app.js') }}" defer></script>{% endblock %}

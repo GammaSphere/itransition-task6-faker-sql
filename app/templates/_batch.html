@@ -1,0 +1,37 @@
+<tr class="batch-head" id="batch-{{ p.batch }}">
+  <th colspan="7" scope="rowgroup">Batch {{ p.batch }} <span>users {{ (p.batch - 1) * p.size + 1 }} to {{ p.batch * p.size }}, seed {{ p.seed }}, {{ p.locale }}</span></th>
+</tr>
+{% for u in users %}
+<tr class="person">
+  <td class="c-num">{{ u.pos + 1 }}</td>
+  <td class="c-name" data-label="Name">
+    <span class="name">{{ u.full_name }}</span>
+    {% if u.about %}<p class="about">{{ u.about }}</p>{% endif %}
+  </td>
+  <td class="c-address" data-label="Address">{{ u.address }}</td>
+  <td class="c-geo" data-label="Location">
+    <a href="https://www.openstreetmap.org/?mlat={{ '%.5f'|format(u.latitude) }}&amp;mlon={{ '%.5f'|format(u.longitude) }}#map=3/{{ '%.3f'|format(u.latitude) }}/{{ '%.3f'|format(u.longitude) }}"
+       title="{{ '%.6f'|format(u.latitude) }}, {{ '%.6f'|format(u.longitude) }} on OpenStreetMap">
+      <svg class="minimap" viewBox="0 0 360 {{ '%.1f'|format(map_h) }}" aria-hidden="true">
+        <rect width="360" height="{{ '%.1f'|format(map_h) }}" class="sea"/>
+        <use href="{{ url_for('static', filename='land.svg') }}#land" class="land"/>
+        <line x1="0" x2="360" y1="{{ '%.1f'|format(map_h / 2) }}" y2="{{ '%.1f'|format(map_h / 2) }}" class="equator"/>
+        <circle cx="{{ u.map_x }}" cy="{{ u.map_y }}" r="15" class="halo"/>
+        <circle cx="{{ u.map_x }}" cy="{{ u.map_y }}" r="9" class="dot"/>
+      </svg>
+      <span class="coords">{{ u.coordinates }}</span>
+    </a>
+  </td>
+  <td class="c-body" data-label="Physical">
+    <dl>
+      <dt>Height</dt><dd>{{ u.height }}</dd>
+      <dt>Weight</dt><dd>{{ u.weight }}</dd>
+      <dt>Eyes</dt><dd>{{ u.eye_color }}</dd>
+      <dt>Hair</dt><dd>{{ u.hair_color }}</dd>
+      <dt>Blood</dt><dd>{{ u.blood_type }}</dd>
+    </dl>
+  </td>
+  <td class="c-phone" data-label="Phone">{{ u.phone }}</td>
+  <td class="c-email" data-label="E-mail">{{ u.email }}</td>
+</tr>
+{% endfor %}

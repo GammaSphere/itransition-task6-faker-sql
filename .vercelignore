@@ -1,0 +1,9 @@
+.venv
+data
+db/data
+tests
+tools
+scripts
+**/__pycache__
+.pytest_cache
+docker-compose.yml

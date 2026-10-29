@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}Faker SQL: fake users from {{ p.locale }}, seed {{ p.seed }}{% endblock %}
+{% block main %}
+<section class="intro">
+  <h1>Fake people, reproducible to the last digit</h1>
+  <p>Pick a locale and a seed. The database generates contact records with stored procedures, and the same locale and seed always give the same people in the same order.</p>
+</section>
+
+<form class="controls" method="get" action="{{ url_for('index') }}" id="controls">
+  <div class="field">
+    <label for="locale">Locale</label>
+    <select id="locale" name="locale" data-autosubmit>
+      {% for code, title in locales %}
+        <option value="{{ code }}"{% if code == p.locale %} selected{% endif %}>{{ title }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="field field-seed">
+    <label for="seed">Seed</label>
+    <div class="seed-box">
+      <input id="seed" name="seed" type="text" inputmode="numeric" autocomplete="off" spellcheck="false"
+             value="{{ p.seed if p.seed is not none else request.args.get('seed', '') }}"
+             pattern="[\-−]?[0-9]{1,19}" title="A whole number, for example 42 or -7"{% if p.errors %} aria-invalid="true"{% endif %}>
+      <button class="dice" type="submit" name="random" value="1" title="Random seed">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="4"/><circle cx="8.5" cy="8.5" r="1.4"/><circle cx="15.5" cy="15.5" r="1.4"/><circle cx="15.5" cy="8.5" r="1.4"/><circle cx="8.5" cy="15.5" r="1.4"/><circle cx="12" cy="12" r="1.4"/></svg>
+        <span class="sr-only">Random seed</span>
+      </button>
+    </div>
+  </div>
+  <div class="field">
+    <label for="size">Batch size</label>
+    <select id="size" name="size" data-autosubmit>
+      {% for s in sizes %}<option value="{{ s }}"{% if s == p.size %} selected{% endif %}>{{ s }} users</option>{% endfor %}
+    </select>
+  </div>
+  <div class="field field-batch">
+    <label for="batch">Start at batch</label>
+    <input id="batch" name="batch" type="number" min="1" max="10000000" value="{{ p.batch }}">
+  </div>
+  <label class="check">
+    <input type="checkbox" name="text" value="1"{% if p.text %} checked{% endif %} data-autosubmit>
+    <span>Bio text <small>(Markov chain)</small></span>
+  </label>
+  <button class="primary" type="submit">Generate</button>
+</form>
+
+{% if p.errors %}
+  <div class="notice" role="alert">{% for e in p.errors %}<p>{{ e }}</p>{% endfor %}</div>
+{% endif %}
+
+{% if users %}
+<div class="sheet">
+  <table class="people">
+    <thead>
+      <tr>
+        <th scope="col" class="c-num">No.</th>
+        <th scope="col">Name</th>
+        <th scope="col">Address</th>
+        <th scope="col">Location</th>
+        <th scope="col">Physical</th>
+        <th scope="col">Phone</th>
+        <th scope="col">E-mail</th>
+      </tr>
+    </thead>
+    <tbody id="rows">
+      {% include "_batch.html" %}
+    </tbody>
+  </table>
+</div>
+
+<div class="more">
+  <a class="button" id="next-batch" href="{{ url_for('index', **p.query(batch=p.batch + 1)) }}"
+     data-src="{{ url_for('batch', **p.query(batch='__N__')) }}" data-next="{{ p.batch + 1 }}">Load batch {{ p.batch + 1 }}</a>
+  <a class="quiet" id="csv" href="{{ url_for('export_csv', **p.query(to=p.batch)) }}"
+     data-base="{{ url_for('export_csv', **p.query(to='__N__')) }}">Download loaded batches as CSV</a>
+  <p class="status" id="status" role="status" aria-live="polite"></p>
+</div>
+{% endif %}
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='app.js') }}" defer></script>{% endblock %}

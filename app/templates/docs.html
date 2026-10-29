@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Faker SQL: stored procedure reference{% endblock %}
+{% block body_class %}page-docs{% endblock %}
+{% block main %}
+<div class="docs">
+  <nav class="docs-toc" aria-label="Contents">
+    {{ toc|safe }}
+  </nav>
+  <article class="prose">
+    {{ content|safe }}
+    <h2 id="live-lookup-sizes">Lookup table sizes in this database</h2>
+    <p>Read live from the <code>faker.lookup_sizes</code> view.</p>
+    <table>
+      <thead><tr><th>Locale</th><th>Table</th><th>List</th><th class="num">Entries</th></tr></thead>
+      <tbody>
+        {% for r in sizes %}<tr><td>{{ r.locale }}</td><td>{{ r.table }}</td><td>{{ r.list }}</td><td class="num">{{ r.entries|thousands }}</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </article>
+</div>
+{% endblock %}

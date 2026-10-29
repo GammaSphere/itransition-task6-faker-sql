@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Faker SQL: database unavailable{% endblock %}
+{% block main %}
+<section class="intro">
+  <h1>The database did not answer</h1>
+  <p>The page needs the <code>faker</code> stored procedures, and the call failed with:</p>
+  <pre class="error-detail">{{ message }}</pre>
+  <p>Reload the page in a few seconds; a sleeping serverless database can take a moment to wake up. If it keeps failing, check <code>DATABASE_URL</code> and run <code>python db/setup.py</code>.</p>
+</section>
+{% endblock %}

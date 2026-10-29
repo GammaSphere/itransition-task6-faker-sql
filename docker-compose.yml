@@ -1,0 +1,12 @@
+# Local PostgreSQL for development and benchmarks:
+#   docker compose up -d
+#   DATABASE_URL=postgresql://faker:faker@127.0.0.1:5544/faker python db/setup.py
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: faker
+      POSTGRES_PASSWORD: faker
+      POSTGRES_DB: faker
+    ports:
+      - "127.0.0.1:5544:5432"

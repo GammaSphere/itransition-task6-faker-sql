@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Faker SQL: benchmark{% endblock %}
+{% block main %}
+<section class="intro">
+  <h1>How fast is the generator?</h1>
+  <p>The benchmark runs <code>faker.benchmark(locale, users, with_text)</code> inside the database: it generates the users, turns every column into text so nothing is skipped, and divides by the elapsed time. The run here uses a small sample so the page stays quick.</p>
+</section>
+
+<form class="controls controls-compact" method="get">
+  <input type="hidden" name="run" value="1">
+  <input type="hidden" name="seed" value="42">
+  <div class="field">
+    <label for="locale">Locale</label>
+    <select id="locale" name="locale">
+      {% for code, title in locales %}<option value="{{ code }}"{% if code == p.locale %} selected{% endif %}>{{ title }}</option>{% endfor %}
+    </select>
+  </div>
+  <label class="check">
+    <input type="checkbox" name="text" value="1"{% if p.text and result %} checked{% endif %}>
+    <span>Include bio text</span>
+  </label>
+  <button class="primary" type="submit">Run benchmark</button>
+</form>
+
+{% if result %}
+<section class="result" aria-live="polite">
+  <p class="result-number">{{ result.users_per_second|thousands }}</p>
+  <p class="result-unit">users per second</p>
+  <p>{{ result.users|thousands }} {{ result.locale }} users{{ ' with bio text' if result.with_text else '' }} in {{ result.seconds }} s on this deployment’s database.</p>
+</section>
+{% endif %}
+
+{% if report %}
+<section class="prose report">
+  {{ report|safe }}
+</section>
+{% endif %}
+{% endblock %}
